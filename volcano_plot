@@ -1,0 +1,12 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("ME9am9pm.csv")
+
+
+x_data = np.random.random(50)*100
+y_data = np.random.random(50)*100
+
+plt.scatter(x_data, y_data)
+plt.show()
