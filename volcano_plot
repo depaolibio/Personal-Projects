@@ -1,12 +1,79 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
+# Read the CSV file
 df = pd.read_csv("ME9am9pm.csv")
 
+# Choose which comparison to plot (9am or 9pm) adjust for panels later
+log_fold_change = "log10_9am"  # or 'log10_9pm'
+pvalue_col = "pvalue_9am"      # or 'pvalue_9pm'
 
-x_data = np.random.random(50)*100
-y_data = np.random.random(50)*100
+# Calculate -log10(p-value) for y-axis
+df["neg_log10_pvalue"] = -np.log10(df[pvalue_col])
 
-plt.scatter(x_data, y_data)
+# Create significance categories
+df['significant'] = df[pvalue_col] < 0.05
+
+# Separate data into significant and non-significant
+sig_data = df[df['significant']]
+nonsig_data = df[~df['significant']]
+
+# Create the plot
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Plot non-significant points (gray, 90% transparency)
+ax.scatter(nonsig_data[log_fold_change],
+           nonsig_data['neg_log10_pvalue'],
+           c='gray',
+           alpha=0.1,
+           s=20,
+           label='Not significant (p ≥ 0.05)')
+
+# Plot significant points with color based on log fold change
+# Separate into upregulated (positive log10) and downregulated (negative log10)
+sig_up = sig_data[sig_data[log_fold_change] > 0]
+sig_down = sig_data[sig_data[log_fold_change] < 0]
+
+# Upregulated genes (positive log10) - vivid blue, 70% transparency
+ax.scatter(sig_up[log_fold_change],
+           sig_up['neg_log10_pvalue'],
+           c='#0066FF',  # vivid blue
+           alpha=0.3,
+           s=20,
+           label='Upregulated (p < 0.05)')
+
+# Downregulated genes (negative log10) - dark red, 70% transparency
+ax.scatter(sig_down[log_fold_change],
+           sig_down['neg_log10_pvalue'],
+           c='#8B0000',  # dark red
+           alpha=0.3,
+           s=20,
+           label='Downregulated (p < 0.05)')
+
+# Add horizontal line at p=0.05
+ax.axhline(y=-np.log10(0.05), color='black', linestyle='--', linewidth=1, alpha=0.5)
+
+# Labels and title
+ax.set_xlabel('log10 Fold Change', fontsize=12, fontweight='bold')
+ax.set_ylabel('-log10(p-value)', fontsize=12, fontweight='bold')
+ax.set_title('Volcano Plot', fontsize=14, fontweight='bold')
+
+# Add legend
+ax.legend(loc='best', frameon=True, fancybox=True, shadow=True)
+
+# Add grid for better readability
+ax.grid(True, alpha=0.3, linestyle=':', linewidth=0.5)
+
+# Adjust layout
+plt.tight_layout()
+
+# Optional: Print statistics
+print(f"Total genes: {len(df)}")
+print(f"Significant genes (p < 0.05): {len(sig_data)}")
+print(f"  - Upregulated: {len(sig_up)}")
+print(f"  - Downregulated: {len(sig_down)}")
+print(f"Non-significant genes: {len(nonsig_data)}")
+
+# Show plot
 plt.show()
